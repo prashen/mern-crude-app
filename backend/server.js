@@ -8,12 +8,7 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// MongoClient.connect('mongodb-connection-string', (err, client) => {
-//   // ... do something here
-// })
-
-
-// db connect
+// ##################### DB CONNECT #############################
 let db;
 const uri = "mongodb+srv://crude-app:prashen123$@cluster0.njy2u.mongodb.net/crude-app-db?retryWrites=true&w=majority";
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -26,9 +21,9 @@ client.connect(err => {
 });
 
 
-// All your handlers here...
+// ##################### ALL YOUR HANDLERS HERE #############################
+// INSERT QUOTES API 
 app.post('/insertQuotes', (req, res) => {
-  // console.log(req.body);
   const dbConnect = db;
   const matchDocument = {
     quotesText: req.body.quotesText
@@ -48,7 +43,33 @@ app.post('/insertQuotes', (req, res) => {
   res.end()
 })
 
-// create server on 3000 port
+// INSERT QUOTES API 
+app.get('/quotes', async (req, res, next) => {
+  const dbConnect = db;
+
+  dbConnect
+   .collection("quotesList")
+   .find().toArray()
+   .then((quotes) => {
+     console.log(quotes)
+    //  res.send(quotes)
+    let body = {
+      message: "Sorry, you provided worng info", type: "success"
+   }
+  //  res.setHeader()
+   res.status(204).send();
+  //  res.json(body);
+
+  //  next()
+  })
+   .catch((err)=> {
+     console.log(err);
+    //  res.send(err)
+   })
+  res.end()
+})
+
+// ##################### APP LISTEN PORT #############################
 app.listen(3000, function(){
   console.log('listening on 3000')
 })
