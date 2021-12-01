@@ -1,5 +1,5 @@
 const express = require('express');
-const bodyParser= require('body-parser')
+const bodyParser = require('body-parser')
 // const MongoClient = require('mongodb').MongoClient
 const { MongoClient } = require('mongodb');
 const app = express();
@@ -23,7 +23,7 @@ client.connect(err => {
 
 // ##################### ALL YOUR HANDLERS HERE #############################
 // INSERT QUOTES API 
-app.post('/insertQuotes', (req, res) => {
+app.post('/insertQuotes', (req, res, next) => {
   const dbConnect = db;
   const matchDocument = {
     quotesText: req.body.quotesText
@@ -32,15 +32,22 @@ app.post('/insertQuotes', (req, res) => {
   dbConnect
     .collection("quotesList")
     .insertOne(matchDocument, function (err, result) {
-      console.log('quotes err', err);
       if (err) {
         res.status(400).send("Error inserting matches!");
+        
       } else {
-        // console.log(`Added a new match with id ${result.insertedId}`);
-        res.status(200).send();
+        let body = {
+          message: `quotes inserted! ${result.insertedId}`, type: "success"
+        }
+
+        res.json(body);
+        res.end();
+        
+        next();
+        
       }
     });
-  res.end()
+  // res.end()
 })
 
 // INSERT QUOTES API 
@@ -48,28 +55,66 @@ app.get('/quotes', async (req, res, next) => {
   const dbConnect = db;
 
   dbConnect
-   .collection("quotesList")
-   .find().toArray()
-   .then((quotes) => {
-     console.log(quotes)
-    //  res.send(quotes)
-    let body = {
-      message: "Sorry, you provided worng info", type: "success"
-   }
-  //  res.setHeader()
-   res.status(204).send();
-  //  res.json(body);
+    .collection("quotesList")
+    .find().toArray()
+    .then((quotes) => {
+      res.json(quotes);
+      res.end()
+      next()
+    })
+    .catch((err) => {
+      console.log(err);
+      //  res.send(err)
+    })
 
-  //  next()
-  })
-   .catch((err)=> {
-     console.log(err);
-    //  res.send(err)
-   })
-  res.end()
+})
+
+// DELETE QUOTES API 
+app.delete('/quotes', async (req, res, next) => {
+  const dbConnect = db;
+  console.log(req)
+  dbConnect
+    .collection("quotesList")
+    .deleteOne({
+      quotesText:req.body.quotesText
+    })
+    .then((result) => {
+      if (result.deletedCount === 0) {
+        return res.json('No quote to delete')
+      }
+      res.json('Deleted Darth Vadar\'s quote')
+      // res.json({message:'deleted!', type:'Success'});
+      // res.end()
+      // next()
+    })
+    .catch((err) => {
+      console.log(err);
+      //  res.send(err)
+    })
+
+})
+
+// UPDATE
+app.put('/quotes', (req, res, next) => {
+  const dbConnect = db;
+  console.log(req.query.quotesText)
+  dbConnect.collection("quotesList")
+  .findOneAndUpdate(
+    { quotesText: req.query.quotesText},
+    {
+      $set: {
+        quotesText: req.body.quotesText
+      }
+    },
+    {
+      upsert: true
+    }
+  )
+    .then(result => res.json('Success'))
+    .catch(error => console.error(error))
 })
 
 // ##################### APP LISTEN PORT #############################
-app.listen(3000, function(){
+app.listen(3000, function () {
   console.log('listening on 3000')
 })
